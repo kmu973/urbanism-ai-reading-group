@@ -37,11 +37,11 @@ Before you can deploy, your code needs to be on GitHub.
     *   *The box will expand to show more options.*
 3.  Scroll down inside this box to **"Inbound security group rules"**.
 4.  Click the **"Add security group rule"** button.
-5.  Fill in the new row:
-    *   Type: **Custom TCP**
-    *   Port range: `3000`
-    *   Source: `0.0.0.0/0` (Anywhere)
-    *   *Why? This opens the door for your Node.js app.*
+5.  Add **THREE SEPARATE RULES**:
+    *   **Rule 1**: Type: `Custom TCP` -> Port: `3000` -> Source: `0.0.0.0/0`
+    *   **Rule 2**: Type: `HTTP` (80) -> Source: `0.0.0.0/0`
+    *   **Rule 3**: Type: `HTTPS` (443) -> Source: `0.0.0.0/0`
+    *   *Why? 3000 is for your app, 80/443 are for the SSL certificate.*
 
 > **Missed this step?**
 > If your instance is already running (you are looking at the "Instance Summary" page):
@@ -50,13 +50,67 @@ Before you can deploy, your code needs to be on GitHub.
 > 3. On the new page, click **"Edit inbound rules"**.
 > 4. Click **"Add rule"** -> Type: Custom TCP, Port: 3000, Source: 0.0.0.0/0 -> **Save rules**.
 
-## Step 4: Automate Setup
-1.  Scroll down to **Advanced details**.
-2.  Find the box **"User data"** (at the very bottom).
-3.  Paste the contents of `aws_setup.sh` (attached) into this box.
-    *   *This script forces the server to auto-install Node.js and Git when it turns on.*
+## Step 4: Configure Server (Run these commands after SSH login)
+Once you are logged in (Step 5 below), paste these blocks one by one:
 
-## Step 5: Login & Deploy
+```bash
+# 1. Update system & install git
+sudo yum update -y
+sudo yum install -y git
+
+# 2. Install Node.js v20
+curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash -
+sudo yum install -y nodejs
+
+# 3. Install PM2 (Process Manager)
+sudo npm install -g pm2
+
+# 4. Create the directory & set permissions
+sudo mkdir -p /var/www/urban-ai-reading
+sudo chown -R ec2-user:ec2-user /var/www/urban-ai-reading
+
+# 5. Navigate to the directory
+cd /var/www/urban-ai-reading
+```
+
+### Phase 3: Configure HTTPS (Run these commands)
+
+**1. Create Nginx Config**
+Copy and paste this entire block into your terminal to point your domain to your app:
+
+```bash
+sudo tee /etc/nginx/conf.d/urban-ai.conf <<EOF
+server {
+    listen 80;
+    server_name urbanism-ai-reading.duckdns.org;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host \$host;
+        proxy_cache_bypass \$http_upgrade;
+    }
+}
+EOF
+```
+
+**2. Restart Nginx**
+```bash
+sudo systemctl restart nginx
+```
+
+**3. Get Certificate**
+```bash
+sudo certbot --nginx -d urbanism-ai-reading.duckdns.org
+```
+*   Follow the prompts (Enter email, Agree to Terms).
+*   It should say "Congratulations!" at the end.
+
+**4. Check it out!**
+Go to `https://urbanism-ai-reading.duckdns.org`
+
 1.  Click **Launch Instance**.
 2.  Wait 2-3 minutes for it to say "Running".
 3.  Click the instance and look for its **Public IPv4 address**.
@@ -68,7 +122,7 @@ Before you can deploy, your code needs to be on GitHub.
 6.  Once logged in:
     ```bash
     cd /var/www/urban-ai-reading
-    git clone https://github.com/YOUR_USERNAME/UrbanAIReading.git .
+    git clone https://github.com/kmu973/urbanism-ai-reading-group.git .
     npm install
     
     # Create your .env file
@@ -80,4 +134,29 @@ Before you can deploy, your code needs to be on GitHub.
     ```
 
 ## Step 6: Access
-Go to `http://<YOUR_PUBLIC_IP>:3000` in your browser. Your app is live!
+Go to `https://urbanism-ai-reading.duckdns.org` in your browser. Your app is live!
+
+---
+
+## How to Update Your App (When you change code)
+When you make changes on your laptop in the future, follow this simple loop:
+
+**1. On Laptop (VS Code):**
+```bash
+git add .
+git commit -m "New features"
+git push
+```
+
+**2. On Server (EC2 Terminal):**
+```bash
+# Go to folder
+cd /var/www/urban-ai-reading
+
+# Pull new code
+git pull
+
+# Restart app to see changes
+pm2 restart urban-ai-server
+```
+Done! Changes are live instantly.
