@@ -1,0 +1,172 @@
+[
+  {
+    "sessionId": "session_2026-02-18",
+    "sessionDate": "2026-02-18",
+    "archivedDate": "2026-02-08T22:15:00.000Z",
+    "winningReading": {
+      "id": "item_1769970000009",
+      "title": "Rewiring Democracy",
+      "author": "Bruce Schneier and Nathan E Sanders",
+      "mediumType": "Book",
+      "link": "https://mitpress.mit.edu/9780262049948/rewiring-democracy/",
+      "voteCount": 5,
+      "attendees": [
+        "minwook@mit.edu"
+      ]
+    },
+    "allProposals": [
+      {
+        "id": "item_1769970000001",
+        "title": "The Work of Art in the Age of Mechanical Reproduction",
+        "author": "Walter Benjamin",
+        "mediumType": "Article",
+        "link": "https://web.mit.edu/allanmc/www/benjamin.pdf",
+        "proposedBy": "Ashley Louie",
+        "proposedDate": "2026-02-06T00:00:00.000Z",
+        "voteCount": 1,
+        "voters": [
+          "voter4@mit.edu"
+        ],
+        "discussionStatus": "proposed"
+      },
+      {
+        "id": "item_1769970000002",
+        "title": "Atlas of AI",
+        "author": "Kate Crawford",
+        "mediumType": "Book",
+        "link": "https://en.wikipedia.org/wiki/Atlas_of_AI",
+        "proposedBy": "Xavier Ayub",
+        "proposedDate": "2026-02-06T00:00:00.000Z",
+        "voteCount": 4,
+        "voters": [
+          "voter1@mit.edu",
+          "voter2@mit.edu",
+          "voter3@mit.edu",
+          "voter6@mit.edu"
+        ],
+        "discussionStatus": "proposed"
+      },
+      {
+        "id": "item_1769970000003",
+        "title": "I Witnessed AI Collide with Climate (NYT Opinion)",
+        "author": "New York Times",
+        "mediumType": "Video",
+        "link": "https://www.nytimes.com/video/opinion/100000010410190/i-witnessed-ai-collide-with-climate.html",
+        "proposedBy": "Claire Hanly",
+        "proposedDate": "2026-02-06T00:00:00.000Z",
+        "voteCount": 0,
+        "voters": [],
+        "discussionStatus": "proposed"
+      },
+      {
+        "id": "item_1769970000004",
+        "title": "Empire of AI",
+        "author": "Karen Hao",
+        "mediumType": "Book",
+        "link": "https://www.penguinrandomhouse.com/books/743569/empire-of-ai-by-karen-hao/",
+        "proposedBy": "Hanyong Xu",
+        "proposedDate": "2026-02-06T00:00:00.000Z",
+        "voteCount": 1,
+        "voters": [
+          "voter1@mit.edu"
+        ],
+        "discussionStatus": "proposed"
+      },
+      {
+        "id": "item_1769970000005",
+        "title": "The Smart Enough City",
+        "author": "Ben Green",
+        "mediumType": "Book",
+        "link": "https://mitpress.mit.edu/9780262538961/the-smart-enough-city/",
+        "proposedBy": "Hanyong Xu",
+        "proposedDate": "2026-02-06T00:00:00.000Z",
+        "voteCount": 3,
+        "voters": [
+          "voter1@mit.edu",
+          "voter3@mit.edu",
+          "voter7@mit.edu"
+        ],
+        "discussionStatus": "proposed"
+      },
+      {
+        "id": "item_1769970000006",
+        "title": "StreetReaderAI: Towards making Street View accessible",
+        "author": "Google Research",
+        "mediumType": "Article",
+        "link": "https://research.google/blog/streetreaderai-towards-making-street-view-accessible-via-context-aware-multimodal-ai/",
+        "proposedBy": "Onur Tumturk",
+        "proposedDate": "2026-02-06T00:00:00.000Z",
+        "voteCount": 0,
+        "voters": [],
+        "discussionStatus": "proposed"
+      },
+      {
+        "id": "item_1769970000007",
+        "title": "What Is a Knowledge Representation?",
+        "author": "Randall Davis, Howard Shrobe, and Peter Szolovits",
+        "mediumType": "Article",
+        "link": "https://ojs.aaai.org/aimagazine/index.php/aimagazine/article/view/1029",
+        "proposedBy": "Rohit Priyadarshi Sanatani",
+        "proposedDate": "2026-02-06T00:00:00.000Z",
+        "voteCount": 3,
+        "voters": [
+          "voter4@mit.edu",
+          "voter5@mit.edu",
+          "voter7@mit.edu"
+        ],
+        "discussionStatus": "proposed"
+      },
+      {
+        "id": "item_1769970000008",
+        "title": "AI Agents and Urban Planning",
+        "author": "Urban AI",
+        "mediumType": "Video",
+        "link": "https://youtu.be/1y7Oa1Kv7bI",
+        "proposedBy": "Skirmante Mozuriunaite",
+        "proposedDate": "2026-02-06T00:00:00.000Z",
+        "voteCount": 3,
+        "voters": [
+          "voter2@mit.edu",
+          "voter3@mit.edu",
+          "voter7@mit.edu"
+        ],
+        "discussionStatus": "proposed"
+      },
+      {
+        "id": "item_1769970000009",
+        "title": "Rewiring Democracy",
+        "author": "Bruce Schneier and Nathan E Sanders",
+        "mediumType": "Book",
+        "link": "https://mitpress.mit.edu/9780262049948/rewiring-democracy/",
+        "proposedBy": "Dale Whittington",
+        "proposedDate": "2026-02-06T00:00:00.000Z",
+        "voteCount": 5,
+        "voters": [
+          "voter2@mit.edu",
+          "voter4@mit.edu",
+          "voter5@mit.edu",
+          "voter6@mit.edu",
+          "voter7@mit.edu"
+        ],
+        "discussionStatus": "selected"
+      },
+      {
+        "id": "item_1769970000010",
+        "title": "Civic Engagement and AI",
+        "author": "Sarah Williams",
+        "mediumType": "Article",
+        "link": "https://mit-genai.pubpub.org/pub/6uejzuox/release/2",
+        "proposedBy": "Allison Tielking",
+        "proposedDate": "2026-02-06T00:00:00.000Z",
+        "voteCount": 2,
+        "voters": [
+          "voter5@mit.edu",
+          "voter6@mit.edu"
+        ],
+        "discussionStatus": "proposed"
+      }
+    ],
+    "totalVoters": 7,
+    "totalProposals": 11
+  }
+]

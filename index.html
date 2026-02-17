@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Urbanism and AI Reading Group</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="p-4 md:p-12 min-h-screen">
+    <div class="max-w-5xl mx-auto bg-white shadow-xl rounded-lg overflow-hidden border border-gray-100 min-h-[80vh]">
+        
+        <!-- Header -->
+        <header class="bg-black text-white p-6 md:p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-bold">Urbanism and AI <span class="text-gray-400 font-normal">Reading Group</span></h1>
+                <p class="text-gray-500 text-xs mono mt-1">MIT LCAU • Biweekly Wednesdays 5pm @ E14-140</p>
+            </div>
+            <div id="header-auth" class="text-right">
+                <!-- Auth injected here -->
+            </div>
+        </header>
+
+        <main class="p-6 md:p-8">
+            
+            <!-- SECTION 0: LOGISTICS & MISSION (Restored) -->
+            <section class="grid md:grid-cols-2 gap-8 mb-12 border-b border-gray-100 pb-12">
+                <div class="space-y-6">
+                    <h2 class="mono text-xs font-bold uppercase tracking-tighter text-gray-400">Logistics</h2>
+                    <div>
+                        <p class="text-lg font-bold text-gray-800">LCAU Conference Room (E14-140)</p>
+                        <p class="text-gray-600 text-sm mb-2">75 Amherst Street, Cambridge, MA</p>
+                        <a href="https://www.google.com/maps/search/?api=1&query=42.36049428731813,-71.08711397767182" target="_blank" class="inline-flex items-center text-xs font-bold text-red-700 hover:underline">
+                            OPEN IN GOOGLE MAPS
+                        </a>
+                    </div>
+                    <div>
+                        <p class="text-lg font-bold text-gray-800">Biweekly on Wednesdays</p>
+                        <p class="text-gray-600 text-sm mb-3">5:00 PM – 6:00 PM <span class="bg-red-50 text-red-700 px-2 py-0.5 rounded text-[10px] font-bold uppercase ml-2">Pizza Provided</span></p>
+                        <a href="https://www.google.com/calendar/render?action=TEMPLATE&text=Urbanism+and+AI+Reading+Group&dates=20260218T170000/20260527T180000&details=Biweekly+session+to+collectively+navigate+the+landscape+of+AI+and+Urbanism.&location=LCAU+Conference+Room+(E14-140),+75+Amherst+St,+Cambridge,+MA+02142&recur=RRULE:FREQ=WEEKLY;INTERVAL=2" 
+                           target="_blank" 
+                           class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded text-xs font-bold uppercase text-gray-600 hover:bg-gray-50 transition-colors">
+                            Add to Calendar
+                        </a>
+                    </div>
+                </div>
+                <div class="bg-gray-50 p-6 rounded-lg">
+                    <h2 class="mono text-xs font-bold uppercase tracking-tighter text-gray-400 mb-2">Mission</h2>
+                    <p class="text-gray-700 text-sm leading-relaxed">
+                        We are <span class="font-bold text-black">collectively navigating the landscape of AI and Urbanism</span>. Our goal is to bring together diverse perspectives to build a shared foundation of knowledge.
+                    </p>
+                </div>
+            </section>
+
+            <!-- SECTION 0.5: UPCOMING READING -->
+            <div id="featuredReading"></div>
+
+            <!-- SECTION 0.6: SCHEDULE (Fixed) -->
+            <section class="mb-12">
+                <h2 class="text-xl font-bold mb-6">Spring 2026 Schedule</h2>
+                <div class="bg-gray-50 rounded-lg p-6 border border-gray-100">
+                <div id="scheduleGrid" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <!-- Calculated Biweekly Dates starting Feb 18 (Wednesday) -->
+                        <div class="p-3 bg-white rounded shadow-sm border-l-4 border-black">
+                            <div class="flex items-center gap-4 mb-2">
+                                <div class="text-center w-12">
+                                    <span class="block text-xs font-bold text-gray-400 uppercase">FEB</span>
+                                    <span class="block text-xl font-bold">18</span>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-sm">Session 1 <span class="text-[10px] font-bold uppercase bg-black text-white px-2 py-0.5 rounded ml-2">Next</span></h3>
+                                    <p class="text-xs text-gray-500">Kickoff & Introductions</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-2 pl-16">
+                                <button onclick="openProposalModal()" class="text-[10px] font-bold uppercase bg-blue-50 text-blue-600 px-2 py-1.5 rounded hover:bg-blue-100 transition-colors">Suggest Article</button>
+                                <button onclick="scrollToVoting()" class="text-[10px] font-bold uppercase bg-blue-50 text-blue-600 px-2 py-1.5 rounded hover:bg-blue-100 transition-colors">Vote</button>
+                            </div>
+                        </div>
+
+
+
+
+                </div>
+            </section>
+
+            <!-- SECTION 1: ACTIVE VOTING (NOT DISCUSSED) -->
+            <section id="votingSection" class="mb-12">
+                <h2 class="section-header">
+                    <span class="pulse-indicator"></span>
+                    <span id="votingSectionTitle">Open for Voting</span>
+                </h2>
+                <div class="table-container">
+                    <table class="table-base">
+                        <thead>
+                            <tr>
+                                <th class="w-24">Date</th>
+                                <th>Title</th>
+                                <th>Author</th>
+                                <th>Format</th>
+                                <th>Proposed By</th>
+                                <th class="text-center">Votes</th>
+                                <th class="text-right">Vote</th>
+                            </tr>
+                        </thead>
+                        <tbody id="votingTableBody" class="text-sm">
+                            <!-- Injected rows -->
+                            <tr><td colspan="7" class="py-4 text-center text-gray-400 italic">Loading active proposals...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Add Reading Button -->
+                <!-- Add Reading Button -->
+                <div id="proposalBanner" class="mt-6 p-4 bg-blue-50 border border-blue-100 rounded-lg flex items-center justify-between">
+                    <div class="flex-1">
+                        <p class="text-sm font-semibold text-gray-800 mb-1">Want to suggest a reading?</p>
+                        <p class="text-xs text-gray-600">Members can add one reading every two weeks</p>
+                    </div>
+                    <button onclick="openProposalModal()" class="bg-blue-600 text-white px-6 py-2.5 rounded font-bold text-sm uppercase hover:bg-blue-700 transition-colors whitespace-nowrap">
+                        Add Reading to List
+                    </button>
+                </div>
+            </section>
+
+            <!-- SECTION 2: DISCUSSED (ARCHIVE) -->
+            <section>
+                <h2 class="section-header">Discussed Readings</h2>
+                <div class="table-container">
+                    <table class="table-base">
+                        <thead>
+                            <tr>
+                                <th class="w-24">Date</th>
+                                <th>Title</th>
+                                <th>Author</th>
+                                <th>Format</th>
+                                <th>Proposed By</th>
+                            </tr>
+                        </thead>
+                        <tbody id="discussedTableBody" class="text-sm text-gray-600">
+                            <!-- Injected rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- VOTING RESULTS MODAL -->
+    <div id="resultsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 max-w-3xl w-full max-h-[80vh] overflow-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 id="resultsTitle" class="text-2xl font-bold">Voting Results</h3>
+                <button onclick="closeResultsModal()" class="text-gray-500 hover:text-gray-700 text-3xl">&times;</button>
+            </div>
+            
+            <div id="resultsContent">
+                <!-- Winner Section -->
+                <!-- Winner Section (Blue Theme) -->
+                <div id="winnerSection" class="bg-blue-50 border-2 border-blue-500 rounded-lg p-4 mb-6">
+                    <div class="flex items-center gap-2 mb-2">
+                        <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                        <span class="font-bold text-blue-800 uppercase text-sm">Winner</span>
+                    </div>
+                    <h4 id="winnerTitle" class="font-bold text-xl mb-1"></h4>
+                    <p id="winnerAuthor" class="text-sm text-gray-600 mb-2"></p>
+                    <p id="winnerVotes" class="text-3xl font-bold text-blue-600"></p>
+                </div>
+                
+                <!-- All Results -->
+                <div>
+                    <h4 class="font-semibold text-lg mb-3">All Proposals</h4>
+                    <div id="allResultsList" class="space-y-2">
+                        <!-- Generated dynamically -->
+                    </div>
+                </div>
+                
+                <!-- Summary Stats -->
+                <div class="mt-6 pt-4 border-t border-gray-200 flex justify-between text-sm text-gray-600">
+                    <span>Total Voters: <strong id="totalVoters">0</strong></span>
+                    <span>Total Proposals: <strong id="totalProposals">0</strong></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FLOATING ACTION BUTTON -->
+    <button id="fabBtn" onclick="openProposalModal()" class="fab hidden" title="Add Article">+</button>
+
+    <!-- PROPOSAL MODAL -->
+    <div id="proposalModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-lg max-w-md w-full relative">
+            <button onclick="toggleModal(false)" class="absolute top-4 right-4 text-gray-400 hover:text-black">&times;</button>
+            <h2 id="modalTitle" class="text-2xl font-bold mb-6">Submit a Proposal</h2>
+            <form id="proposalForm" onsubmit="submitProposal(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-bold mb-1">Title</label>
+                    <input type="text" id="p_title" required class="w-full border p-2 rounded">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold mb-1">Author</label>
+                    <input type="text" id="p_author" required class="w-full border p-2 rounded">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold mb-1">Link (Optional)</label>
+                    <input type="url" id="p_link" class="w-full border p-2 rounded" placeholder="https://...">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold mb-1">Type</label>
+                    <select id="p_type" class="w-full border p-2 rounded">
+                        <option value="Book">Book</option>
+                        <option value="Article">Article</option>
+                        <option value="Video">Video</option>
+                        <option value="Tool">Tool</option>
+                    </select>
+                </div>
+                <button type="submit" id="submitBtnText" class="w-full bg-blue-600 text-white font-bold py-2 rounded hover:bg-blue-700 transition-colors shadow-md">
+                    SUBMIT
+                </button>
+            </form>
+        </div>
+    </div>
+
+<script type="module" src="/js/main.js"></script>
+</body>
+</html>
