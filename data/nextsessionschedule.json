@@ -1,0 +1,58 @@
+[
+  {
+    "sessionDate": "2026-02-18",
+    "displayWindowTest": "Feb 5 - Feb 18",
+    "featuredStart": "2026-02-05T00:00:00-05:00",
+    "featuredEnd": "2026-02-18T18:00:00-05:00",
+    "meetingTime": "5:00 PM - 6:00 PM EST"
+  },
+  {
+    "sessionDate": "2026-03-04",
+    "displayWindowTest": "Feb 18 - Mar 4",
+    "featuredStart": "2026-02-18T18:00:01-05:00",
+    "featuredEnd": "2026-03-04T18:00:00-05:00",
+    "meetingTime": "5:00 PM - 6:00 PM EST"
+  },
+  {
+    "sessionDate": "2026-03-18",
+    "displayWindowTest": "Mar 4 - Mar 18",
+    "featuredStart": "2026-03-04T18:00:01-05:00",
+    "featuredEnd": "2026-03-18T18:00:00-05:00",
+    "meetingTime": "5:00 PM - 6:00 PM EST"
+  },
+  {
+    "sessionDate": "2026-04-01",
+    "displayWindowTest": "Mar 18 - Apr 1",
+    "featuredStart": "2026-03-18T18:00:01-05:00",
+    "featuredEnd": "2026-04-01T18:00:00-05:00",
+    "meetingTime": "5:00 PM - 6:00 PM EST"
+  },
+  {
+    "sessionDate": "2026-04-15",
+    "displayWindowTest": "Apr 1 - Apr 15",
+    "featuredStart": "2026-04-01T18:00:01-05:00",
+    "featuredEnd": "2026-04-15T18:00:00-05:00",
+    "meetingTime": "5:00 PM - 6:00 PM EST"
+  },
+  {
+    "sessionDate": "2026-04-29",
+    "displayWindowTest": "Apr 15 - Apr 29",
+    "featuredStart": "2026-04-15T18:00:01-05:00",
+    "featuredEnd": "2026-04-29T18:00:00-05:00",
+    "meetingTime": "5:00 PM - 6:00 PM EST"
+  },
+  {
+    "sessionDate": "2026-05-13",
+    "displayWindowTest": "Apr 29 - May 13",
+    "featuredStart": "2026-04-29T18:00:01-05:00",
+    "featuredEnd": "2026-05-13T18:00:00-05:00",
+    "meetingTime": "5:00 PM - 6:00 PM EST"
+  },
+  {
+    "sessionDate": "2026-05-27",
+    "displayWindowTest": "May 13 - May 27",
+    "featuredStart": "2026-05-13T18:00:01-05:00",
+    "featuredEnd": "2026-05-27T18:00:00-05:00",
+    "meetingTime": "5:00 PM - 6:00 PM EST"
+  }
+]

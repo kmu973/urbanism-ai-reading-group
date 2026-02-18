@@ -7,10 +7,12 @@
     "link": "https://web.mit.edu/allanmc/www/benjamin.pdf",
     "proposedBy": "Ashley Louie",
     "voteStatus": "open",
-    "voteCount": 0,
+    "voteCount": 1,
     "discussionStatus": "proposed",
     "proposedDate": "2026-02-06T00:00:00.000Z",
-    "voters": []
+    "voters": [
+      "javierdiazpenaloza@gmail.com"
+    ]
   },
   {
     "id": "item_1769970000002",
@@ -20,10 +22,12 @@
     "link": "https://en.wikipedia.org/wiki/Atlas_of_AI",
     "proposedBy": "Xavier Ayub",
     "voteStatus": "open",
-    "voteCount": 0,
+    "voteCount": 1,
     "discussionStatus": "proposed",
     "proposedDate": "2026-02-06T00:00:00.000Z",
-    "voters": []
+    "voters": [
+      "atta@mit.edu"
+    ]
   },
   {
     "id": "item_1769970000003",
@@ -33,10 +37,12 @@
     "link": "https://www.nytimes.com/video/opinion/100000010410190/i-witnessed-ai-collide-with-climate.html",
     "proposedBy": "Claire Hanly",
     "voteStatus": "open",
-    "voteCount": 0,
+    "voteCount": 1,
     "discussionStatus": "proposed",
     "proposedDate": "2026-02-06T00:00:00.000Z",
-    "voters": []
+    "voters": [
+      "atta@mit.edu"
+    ]
   },
   {
     "id": "item_1769970000004",
@@ -46,10 +52,11 @@
     "link": "https://www.penguinrandomhouse.com/books/743569/empire-of-ai-by-karen-hao/",
     "proposedBy": "Hanyong Xu",
     "voteStatus": "open",
-    "voteCount": 1,
+    "voteCount": 2,
     "discussionStatus": "proposed",
     "proposedDate": "2026-02-06T00:00:00.000Z",
     "voters": [
+      "atta@mit.edu",
       "minwook@mit.edu"
     ]
   },
@@ -91,10 +98,12 @@
     "link": "https://ojs.aaai.org/aimagazine/index.php/aimagazine/article/view/1029",
     "proposedBy": "Rohit Priyadarshi Sanatani",
     "voteStatus": "open",
-    "voteCount": 0,
+    "voteCount": 1,
     "discussionStatus": "proposed",
     "proposedDate": "2026-02-06T00:00:00.000Z",
-    "voters": []
+    "voters": [
+      "javierdiazpenaloza@gmail.com"
+    ]
   },
   {
     "id": "item_1769970000008",
@@ -122,7 +131,9 @@
     "proposedDate": "2026-02-06T00:00:00.000Z",
     "voters": [],
     "attendees": [
-      "minwook@mit.edu"
+      "minwook@mit.edu",
+      "atta@mit.edu",
+      "javierdiazpenaloza@gmail.com"
     ]
   },
   {
@@ -150,5 +161,18 @@
     "voters": [],
     "discussionStatus": "proposed",
     "proposedDate": "2026-02-17T03:37:17.731Z"
+  },
+  {
+    "id": "item_1771372936337",
+    "title": "test-260217",
+    "author": "test-260217",
+    "mediumType": "Book",
+    "link": "https://test.com",
+    "proposedBy": "KANG MINWOOK",
+    "voteStatus": "open",
+    "voteCount": 0,
+    "voters": [],
+    "discussionStatus": "proposed",
+    "proposedDate": "2026-02-18T00:02:51.882Z"
   }
 ]

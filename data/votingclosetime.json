@@ -1,0 +1,53 @@
+[
+  {
+    "sessionDate": "2026-02-18",
+    "votingOpen": "2026-01-20T00:00:00-05:00",
+    "votingClose": "2026-02-04T23:59:59-05:00",
+    "sessionIndex": 0,
+    "note": "Voting for Feb 18 closed on Feb 4"
+  },
+  {
+    "sessionDate": "2026-03-04",
+    "votingOpen": "2026-02-04T18:00:00-05:00",
+    "votingClose": "2026-02-18T23:59:59-05:00",
+    "sessionIndex": 1,
+    "note": "Voting for Mar 4 closes on Feb 18"
+  },
+  {
+    "sessionDate": "2026-03-18",
+    "votingOpen": "2026-02-18T18:00:00-05:00",
+    "votingClose": "2026-03-04T23:59:59-05:00",
+    "sessionIndex": 2,
+    "note": "Voting for Mar 18 closes on Mar 4"
+  },
+  {
+    "sessionDate": "2026-04-01",
+    "votingOpen": "2026-03-04T18:00:00-05:00",
+    "votingClose": "2026-03-18T23:59:59-05:00",
+    "sessionIndex": 3
+  },
+  {
+    "sessionDate": "2026-04-15",
+    "votingOpen": "2026-03-18T18:00:00-05:00",
+    "votingClose": "2026-04-01T23:59:59-05:00",
+    "sessionIndex": 4
+  },
+  {
+    "sessionDate": "2026-04-29",
+    "votingOpen": "2026-04-01T18:00:00-05:00",
+    "votingClose": "2026-04-15T23:59:59-05:00",
+    "sessionIndex": 5
+  },
+  {
+    "sessionDate": "2026-05-13",
+    "votingOpen": "2026-04-15T18:00:00-05:00",
+    "votingClose": "2026-04-29T23:59:59-05:00",
+    "sessionIndex": 6
+  },
+  {
+    "sessionDate": "2026-05-27",
+    "votingOpen": "2026-04-29T18:00:00-05:00",
+    "votingClose": "2026-05-13T23:59:59-05:00",
+    "sessionIndex": 7
+  }
+]
