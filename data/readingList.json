@@ -161,18 +161,5 @@
     "voters": [],
     "discussionStatus": "proposed",
     "proposedDate": "2026-02-17T03:37:17.731Z"
-  },
-  {
-    "id": "item_1771372936337",
-    "title": "test-260217",
-    "author": "test-260217",
-    "mediumType": "Book",
-    "link": "https://test.com",
-    "proposedBy": "KANG MINWOOK",
-    "voteStatus": "open",
-    "voteCount": 0,
-    "voters": [],
-    "discussionStatus": "proposed",
-    "proposedDate": "2026-02-18T00:02:51.882Z"
   }
 ]
