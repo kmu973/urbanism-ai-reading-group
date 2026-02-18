@@ -138,25 +138,72 @@ Go to `https://urbanism-ai-reading.duckdns.org` in your browser. Your app is liv
 
 ---
 
-## How to Update Your App (When you change code)
-When you make changes on your laptop in the future, follow this simple loop:
 
-**1. On Laptop (VS Code):**
+---
+
+## Managing Live Data & Updates
+
+Since your app modifies data files (`votingResults.json`, `readingList.json`) directly on the server when people vote, you need to be careful when updating the code to avoid overwriting or losing this data.
+
+### Workflow: "Pull Data First, Then Push Code"
+
+**Step 1: Download Live Data to Local (Backup)**
+Before you push new code, download the latest voting results **and member data** from the server to your laptop.
+This command grabs EVERYTHING in the `data/` folder, including:
+*   `votingResults.json` (Past votes)
+*   `readingList.json` (Current proposals & **Attendance Status**)
+*   `members.json` (User profiles)
+
+Run this in your **LOCAL TERMINAL (Git Bash or similar)**, NOT on the server:
+
+```bash
+# 1. Download the data folder content
+scp -i "C:\Users\minth\MIT Dropbox\CDDL\RSC_2026_UrbanismAI_Reading_Group\urban-ai-key.pem" -r ec2-user@54.173.11.40:/var/www/urban-ai-reading/data/* ./data/
+
+# 2. Check what changed
+git status
+# (You should see modified JSON files in data/)
+```
+
+**Step 2: Commit the Live Data**
+Now that you have the latest votes on your laptop, save them to your local git history.
+
+```bash
+git add data/
+git commit -m "Sync: Downloaded live voting data from production"
+```
+
+**Step 3: Make Your Code Changes**
+Now you can edit your code (e.g., `server.js`, `voting.js`, etc.) safely effectively "on top" of the latest data.
+Once done:
+
 ```bash
 git add .
-git commit -m "New features"
+git commit -m "Feature: Updated voting deadline logic"
 git push
 ```
 
-**2. On Server (EC2 Terminal):**
+**Step 4: Update the Server**
+Now SSH into the server and pull the updates. Since you already downloaded and committed the data differences in Step 2, git on the server should be happy to fast-forward.
+
 ```bash
-# Go to folder
+# 1. SSH in
+ssh -i "C:\Users\minth\MIT Dropbox\CDDL\RSC_2026_UrbanismAI_Reading_Group\urban-ai-key.pem" ec2-user@54.173.11.40
+
+# 2. Go to app folder
 cd /var/www/urban-ai-reading
 
-# Pull new code
+# 3. Pull (This might ask you to stash local changes if votes happened WHILE you were working)
 git pull
 
-# Restart app to see changes
+# 4. Restart App
 pm2 restart urban-ai-server
 ```
-Done! Changes are live instantly.
+
+> **Troubleshooting: "Local changes would be overwritten by merge"**
+> If people voted *while* you were working between Step 1 and Step 4, `git pull` on the server might complain.
+> In that case, on the server run:
+> `git stash` (hides the very latest votes temporarily)
+> `git pull` (gets your code)
+> `git stash pop` (re-applies the latest votes on top)
+> *Note: This is rare if traffic is low.*

@@ -15,7 +15,21 @@ class ReadingListManager {
 
     // Initialize data asynchronously
     async init() {
+        // Load schedule if not already loaded (for deadline checks)
+        // We need schedule.json to check dates
+        if (!this.scheduleDates || this.scheduleDates.length === 0) {
+           const schedulePath = path.join(__dirname, '../data/schedule.json');
+           try {
+               const scheduleData = await fs.readFile(schedulePath, 'utf8');
+               this.scheduleDates = JSON.parse(scheduleData);
+           } catch(e) {
+               console.error("Error loading schedule in Manager:", e);
+               this.scheduleDates = [];
+           }
+        }
+
         // Only load if not already loaded or if a refresh is explicitly needed
+
         // For simplicity, we'll just load every time init() is called.
         // A more robust solution might check a 'loaded' flag.
         this.readingList = await this.loadJSON(READING_LIST_PATH);
@@ -38,6 +52,81 @@ class ReadingListManager {
             console.error(`Error loading JSON from ${filePath}:`, err);
             return [];
         }
+    }
+
+
+
+    // Helper: Calculate strict deadline
+    getDeadline(dateStr) {
+        if (!dateStr) return new Date(0); // Past date if invalid
+        const [y, m, d] = dateStr.split('-').map(Number);
+        
+        // Strict 11:59:59 PM EST/EDT
+        // Same logic as client-side
+        let dt = new Date(Date.UTC(y, m - 1, d, 23 + 5, 59, 59)); // Guess UTC-5
+        
+        // Intl formatter for NY
+        const formatter = new Intl.DateTimeFormat('en-US', {
+            timeZone: 'America/New_York',
+            hour: 'numeric', hour12: false
+        });
+        
+        const parts = formatter.formatToParts(dt);
+        const hourInNY = parseInt(parts.find(p => p.type === 'hour').value);
+        
+        // Adjust if off due to DST (EDT is UTC-4)
+        if (hourInNY === 0 || hourInNY === 24) { 
+            dt.setHours(dt.getHours() - 1);
+        }
+        return dt;
+    }
+
+    // Helper: Check if voting is open for the upcoming session
+    checkVotingOpen() {
+        if (!this.scheduleDates || this.scheduleDates.length === 0) return true; // Default to open if no schedule
+        
+        const now = new Date();
+        // Logic: Find next session. Deadline is "Tuesday before" (usually).
+        // Actually, logic is: Find the session we are voting FOR.
+        // If we have a 'selected' item, we are voting for the session AFTER next?
+        // Let's replicate the `votingTable.js` logic which is the source of truth for "active session".
+        
+        // Use simplified logic: 
+        // 1. Find the first session in the future.
+        // 2. Its deadline is usually the day before.
+        // 3. BUT logic says: "Voting closes Tuesday... Session is Wednesday".
+        // The schedule array contains Session Dates (Wednesdays).
+        
+        let nextIndex = this.scheduleDates.findIndex(d => new Date(d) >= now);
+        
+        if (nextIndex === -1) return false; // No more sessions? Closed.
+        
+        let deadlineDate = null;
+        
+        // If nextIndex is 0 (First session), logic is a bit custom or maybe just D-1
+        if (nextIndex === 0) {
+             // For the very first session, usually we vote until day before
+             deadlineDate = this.getDeadline(this.scheduleDates[0]);
+             deadlineDate.setDate(deadlineDate.getDate() - 1); // Day before
+        } else {
+            // Standard: Voting for session at nextIndex
+            // Deadline is day before session at nextIndex
+            // UNLESS we are in the "gap" week?
+            // Let's assume strictness: Voting closes 11:59PM the day before the session.
+             deadlineDate = this.getDeadline(this.scheduleDates[nextIndex]);
+             deadlineDate.setDate(deadlineDate.getDate() - 1);
+             // Verify: If we just finished session N-1, we are voting for Session N.
+        }
+        
+        // Correction: The deadline date should still be set to 23:59:59 NY
+        // `getDeadline` returns 23:59:59 of the input date.
+        // If input was SessionDate (Wed), we subtracted 1 day -> Tuesday. 
+        // The status is preserved (23:59:59).
+        
+        if (now > deadlineDate) {
+            return false;
+        }
+        return true;
     }
 
     async saveJSON(filePath, data) {
@@ -173,6 +262,11 @@ class ReadingListManager {
     async addProposal(proposal) {
         await this.init(); // Ensure we have latest data to check against
 
+        // CHECK DEADLINE
+        if (!this.checkVotingOpen()) {
+            throw new Error("Proposals are closed for the upcoming session.");
+        }
+
         // Target: Only allow 1 active proposal per user
         // Check newReadings (staging) and readingList (active) for 'proposed' items
         const existingIndexNew = this.newReadings.findIndex(i => i.proposedBy === proposal.proposedBy);
@@ -274,6 +368,11 @@ class ReadingListManager {
     // 3. Vote: Update votes for an item (Max 3 votes per person)
     async voteForItem(itemId, userEmail) {
         await this.init();
+        
+        // CHECK DEADLINE
+        if (!this.checkVotingOpen()) {
+            throw new Error("Voting is closed for the upcoming session.");
+        }
         
         // Find all items user has already voted for in this cycle
         const votedItems = this.readingList.filter(i => 

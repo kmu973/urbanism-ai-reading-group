@@ -121,42 +121,114 @@ app.get('/api/config', (req, res) => {
     });
 });
 
+// GET /api/voting-rules
+app.get('/api/voting-rules', (req, res) => {
+    try {
+        const rulesPath = path.join(__dirname, 'data', 'votingclosetime.json');
+        if (fs.existsSync(rulesPath)) {
+            const rules = fs.readFileSync(rulesPath, 'utf8');
+            res.json(JSON.parse(rules));
+        } else {
+            console.error("votingclosetime.json not found");
+            res.status(404).json({ error: "Voting rules not found" });
+        }
+    } catch (err) {
+        console.error('Error reading voting rules:', err);
+        res.status(500).json({ error: 'Failed to load voting rules' });
+    }
+});
+
+// GET /api/next-session-schedule
+app.get('/api/next-session-schedule', (req, res) => {
+    try {
+        const schedulePath = path.join(__dirname, 'data', 'nextsessionschedule.json');
+        if (fs.existsSync(schedulePath)) {
+            const data = fs.readFileSync(schedulePath, 'utf8');
+            res.json(JSON.parse(data));
+        } else {
+            res.status(404).json({ error: "Next session schedule not found" });
+        }
+    } catch (err) {
+        console.error('Error reading next session schedule:', err);
+        res.status(500).json({ error: 'Failed to load schedule' });
+    }
+});
+
 
 // Helper function to check and archive past voting sessions
 function checkAndArchiveVotes() {
     try {
         const now = new Date();
         const votingResultsPath = path.join(__dirname, 'data', 'votingResults.json');
+        const votingRulesPath = path.join(__dirname, 'data', 'votingclosetime.json');
         
+        // Load rules
+        if (!fs.existsSync(votingRulesPath)) {
+            console.error("Cannot archive: votingclosetime.json missing");
+            return;
+        }
+        const votingRules = JSON.parse(fs.readFileSync(votingRulesPath, 'utf8'));
+
         // Load existing archives
         let archives = [];
         if (fs.existsSync(votingResultsPath)) {
-            archives = JSON.parse(fs.readFileSync(votingResultsPath, 'utf8'));
+            try {
+                archives = JSON.parse(fs.readFileSync(votingResultsPath, 'utf8'));
+            } catch (e) {
+                console.error("Error reading votingResults.json, starting fresh", e);
+                archives = [];
+            }
         }
         
         // Load current reading list
         const readingListPath = path.join(__dirname, 'data', 'readingList.json');
+        if (!fs.existsSync(readingListPath)) return;
         let readingList = JSON.parse(fs.readFileSync(readingListPath, 'utf8'));
         
-        // Check each schedule date to see if it has passed and needs archiving
-        SCHEDULE_DATES.forEach((dateStr) => {
-            const [y, m, d] = dateStr.split('-').map(Number);
-            const sessionDate = new Date(y, m - 1, d);
-            const sessionId = `session_${dateStr}`;
+        // Check each rule
+        votingRules.forEach((rule) => {
+            const votingCloseDate = new Date(rule.votingClose); // ISO String from JSON
+            const sessionId = `session_${rule.sessionDate}`; // Format: session_YYYY-MM-DD
             
-            // If session date has passed and not already archived
-            if (sessionDate < now && !archives.find(a => a.sessionId === sessionId)) {
-                log(`Archiving voting session for ${dateStr}`);
+            // If voting has closed AND we haven't archived it yet
+            if (now > votingCloseDate && !archives.find(a => a.sessionId === sessionId)) {
+                log(`Archiving voting session for ${rule.sessionDate} (Closed ${rule.votingClose})`);
                 
-                // Find the winning reading for this session
-                const winningReading = readingList.find(r => 
-                    r.discussionStatus === 'selected' || r.discussionStatus === 'discussed'
-                );
+                // --- WINNER SELECTION LOGIC ---
+                // 1. Filter proposals that were "open" (or candidates)
+                // In this simple app, ALL proposals in readingList are candidates unless already 'discussed'.
+                // Ideally, we should filter by 'proposedDate' vs 'votingOpen' to be precise, 
+                // but usually all 'proposed' items are up for vote.
                 
-                // Get all proposals that were open for voting
-                const allProposals = readingList
-                    .filter(r => r.voteStatus === 'open' || r.voteStatus === 'closed')
-                    .map(r => ({
+                const candidates = readingList.filter(r => r.discussionStatus === 'proposed');
+                
+                if (candidates.length === 0) {
+                    log(`No candidates for session ${sessionId}`);
+                    return; // Skip if no candidates
+                }
+
+                // 2. Sort by Votes (Descending)
+                candidates.sort((a, b) => (b.voteCount || 0) - (a.voteCount || 0));
+                
+                // 3. Pick Winner (Top 1)
+                const winner = candidates[0];
+                
+                // 4. Update Winner Status in Reading List (Persist this change!)
+                // We need to mark it as 'selected' so it shows up as "Upcoming"
+                // And maybe mark others as 'archived_proposal' or keep them 'proposed' for next round?
+                // Usually, losers carry over. Winner becomes 'selected'.
+                
+                // user request: "how data will be saved"
+                // We update readingList.json
+                const winnerIndex = readingList.findIndex(r => r.id === winner.id);
+                if (winnerIndex !== -1) {
+                    readingList[winnerIndex].discussionStatus = 'selected'; // Marks it for "Next Session"
+                    // Also set the "sessionDate" it is selected FOR?
+                    readingList[winnerIndex].selectedForSession = rule.sessionDate;
+                }
+                
+                // 5. Create Archive Entry
+                const allProposalsSnapshot = candidates.map(r => ({
                         id: r.id,
                         title: r.title,
                         author: r.author,
@@ -166,38 +238,35 @@ function checkAndArchiveVotes() {
                         proposedDate: r.proposedDate,
                         voteCount: r.voteCount || 0,
                         voters: r.voters || [],
-                        discussionStatus: r.discussionStatus
-                    }));
-                
-                // Create archive entry
+                        discussionStatus: r.id === winner.id ? 'selected' : 'proposed'
+                }));
+
                 const archiveEntry = {
                     sessionId,
-                    sessionDate: dateStr,
+                    sessionDate: rule.sessionDate,
                     archivedDate: new Date().toISOString(),
-                    winningReading: winningReading ? {
-                        id: winningReading.id,
-                        title: winningReading.title,
-                        author: winningReading.author,
-                        mediumType: winningReading.mediumType,
-                        link: winningReading.link,
-                        voteCount: winningReading.voteCount || 0,
-                        attendees: winningReading.attendees || []
-                    } : null,
-                    allProposals,
-                    totalVoters: new Set(allProposals.flatMap(p => p.voters)).size,
-                    totalProposals: allProposals.length
+                    winningReading: {
+                        id: winner.id,
+                        title: winner.title,
+                        author: winner.author,
+                        mediumType: winner.mediumType,
+                        link: winner.link,
+                        voteCount: winner.voteCount || 0,
+                        attendees: [] // Reset attendees for the new event
+                    },
+                    allProposals: allProposalsSnapshot,
+                    totalVoters: new Set(allProposalsSnapshot.flatMap(p => p.voters)).size,
+                    totalProposals: allProposalsSnapshot.length
                 };
                 
                 archives.push(archiveEntry);
-                log(`Archived ${allProposals.length} proposals for session ${sessionId}`);
+                log(`Archived session ${sessionId}. Winner: ${winner.title} (${winner.voteCount} votes)`);
+                
+                // SAVE FILES
+                fs.writeFileSync(votingResultsPath, JSON.stringify(archives, null, 2));
+                fs.writeFileSync(readingListPath, JSON.stringify(readingList, null, 2));
             }
         });
-        
-        // Save updated archives
-        if (archives.length > 0) {
-            fs.writeFileSync(votingResultsPath, JSON.stringify(archives, null, 2));
-        }
-        
 
     } catch (error) {
         console.error('Error during vote archiving:', error);
@@ -244,7 +313,7 @@ function log(msg) {
 
 // POST /api/proposals
 // Body: { title, author, mediumType, proposedBy }
-app.post('/api/proposals', ensureAuthenticated, (req, res) => {
+app.post('/api/proposals', ensureAuthenticated, async (req, res) => {
     try {
         log(`User proposing: ${JSON.stringify(req.user)}`);
 
@@ -262,7 +331,7 @@ app.post('/api/proposals', ensureAuthenticated, (req, res) => {
         }
 
         // Enforce: proposedBy is the logged-in user's name
-        const msg = manager.addProposal({ title, author, mediumType, link, proposedBy: userName });
+        const msg = await manager.addProposal({ title, author, mediumType, link, proposedBy: userName });
         log(`Proposal action: ${msg} (${title} by ${userName})`);
         res.status(201).json({ message: msg });
     } catch (e) {
@@ -272,7 +341,7 @@ app.post('/api/proposals', ensureAuthenticated, (req, res) => {
 });
 
 // DELETE /api/proposals/:id
-app.delete('/api/proposals/:id', ensureAuthenticated, (req, res) => {
+app.delete('/api/proposals/:id', ensureAuthenticated, async (req, res) => {
     try {
         const itemId = req.params.id;
         
@@ -281,7 +350,7 @@ app.delete('/api/proposals/:id', ensureAuthenticated, (req, res) => {
         }
         const userEmail = req.user.emails[0].value;
         
-        const msg = manager.deleteProposal(itemId, userEmail);
+        const msg = await manager.deleteProposal(itemId, userEmail);
         log(`Proposal Deleted: ${itemId} by ${userEmail}`);
         res.json({ message: msg });
     } catch (e) {
@@ -292,7 +361,7 @@ app.delete('/api/proposals/:id', ensureAuthenticated, (req, res) => {
 
 // POST /api/votes
 // Body: { itemId }
-app.post('/api/votes', ensureAuthenticated, (req, res) => {
+app.post('/api/votes', ensureAuthenticated, async (req, res) => {
     try {
         const { itemId } = req.body;
         
@@ -305,7 +374,7 @@ app.post('/api/votes', ensureAuthenticated, (req, res) => {
             return res.status(400).json({ error: 'Item ID is required.' });
         }
 
-        const msg = manager.voteForItem(itemId, userEmail); // Pass voter email to logic
+        const msg = await manager.voteForItem(itemId, userEmail); // Pass voter email to logic
         log(`Vote action: ${msg} (${itemId} by ${userEmail})`);
         res.status(200).json({ message: msg });
     } catch (e) {
@@ -316,7 +385,7 @@ app.post('/api/votes', ensureAuthenticated, (req, res) => {
 
 // POST /api/attend
 // Body: { itemId }
-app.post('/api/attend', ensureAuthenticated, (req, res) => {
+app.post('/api/attend', ensureAuthenticated, async (req, res) => {
     try {
         const { itemId } = req.body;
         
@@ -329,7 +398,7 @@ app.post('/api/attend', ensureAuthenticated, (req, res) => {
             return res.status(400).json({ error: 'Item ID is required.' });
         }
 
-        const msg = manager.toggleAttendance(itemId, userEmail);
+        const msg = await manager.toggleAttendance(itemId, userEmail);
         log(`Attend action: ${msg} (${itemId} by ${userEmail})`);
         res.status(200).json({ message: msg });
     } catch (e) {

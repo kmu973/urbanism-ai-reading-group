@@ -3,7 +3,7 @@
  * Renders the calendar grid and handles "View Results" interactions.
  */
 
-import { getSchedule, getDeadline, formatDeadlineDisplay } from '../utils/schedule.js';
+import { getSchedule, getDeadline, formatDeadlineDisplay, getCurrentSessionIndex, getNYTime } from '../utils/schedule.js';
 import { scrollToVoting } from '../voting.js'; // Import action
 
 export function renderSchedule(data, selectedItem) {
@@ -64,53 +64,51 @@ function updateVotingSectionTitle(archivedSessionIds) {
 function renderScheduleGrid(data, selectedItem, archivedSessionIds) {
     const scheduleGrid = document.getElementById('scheduleGrid');
     const SCHEDULE_DATES = getSchedule();
-    const now = new Date();
-    let nextIndex = SCHEDULE_DATES.findIndex(d => new Date(d) >= now);
+    const nyNow = getNYTime();
     
-    if (nextIndex === -1 && new Date(SCHEDULE_DATES[SCHEDULE_DATES.length-1]) < now) {
-        nextIndex = SCHEDULE_DATES.length;
+    // Use unified logic:
+    // This returns the index of the UPCOMING session (e.g. Feb 18 if today is Feb 17).
+    let nextIndex = getCurrentSessionIndex();
+    
+    // If nextIndex is -1 (all sessions past), target beyond end
+    if (nextIndex === -1) {
+        // Double check if *really* past or just not found? 
+        // getCurrentSessionIndex handles "Past last session"
+         nextIndex = SCHEDULE_DATES.length;
     }
 
     scheduleGrid.innerHTML = SCHEDULE_DATES.map((dateStr, idx) => {
+        // Use consistent date parsing (Year-Month-Day)
         const [y, m, d] = dateStr.split('-').map(Number);
+        // Create date object for display (Midnight local is fine for day/month names)
         const localDate = new Date(y, m - 1, d);
         
         const month = localDate.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
         const day = localDate.getDate().toString().padStart(2, '0');
         
         let title = "Topic TBD";
-        let titleDisplay = title; // Separate variable for display (can contain HTML)
+        let titleDisplay = title; 
         let buttons = "";
         let opacity = "opacity-100";
         let containerClass = "bg-white border-transparent";
         
+        // Define relationship to Current Session
         const isNext = (idx === nextIndex);
-        const isPast = (idx < nextIndex && nextIndex !== -1) || (nextIndex === SCHEDULE_DATES.length);
+        const isPast = (idx < nextIndex); // STRICTLY previous
         
-        // Check if voting has closed (deadline = previous session date)
+        // Check archive status
         const sessionId = `session_${dateStr}`;
         const hasArchive = archivedSessionIds.has(sessionId);
 
-        // PRIORITY 1: Check for completed sessions (has archive OR past)
-        // hasArchive alone is enough - covers manually archived sessions
+        // Determine if this session is "Completed"
+        // Completed = Archived OR Past
         const isCompleted = hasArchive || isPast;
         
         if (isCompleted) {
-            // Keep highlighting if it's the next upcoming session
-            if (isNext && selectedItem) {
-                // Show the reading title with link for upcoming session
-                title = selectedItem.title;
-                titleDisplay = selectedItem.link 
-                    ? `<a href="${selectedItem.link}" target="_blank" class="hover:underline hover:text-blue-600">${selectedItem.title}</a>`
-                    : selectedItem.title;
-                containerClass = "bg-white border-2 border-blue-500 transform scale-105 z-10 shadow-xl";
-                opacity = "opacity-100";
-            } else {
-                // Past session - show View Results
-                title = hasArchive ? "View Results" : "Session Completed";
-                titleDisplay = title;
-                opacity = "opacity-60";
-            }
+             // Past session - show View Results
+            title = hasArchive ? "View Results" : "Session Completed";
+            titleDisplay = title;
+            opacity = "opacity-60";
             
             // Show "View Results" button if archive exists
             buttons = hasArchive ? `
@@ -119,8 +117,9 @@ function renderScheduleGrid(data, selectedItem, archivedSessionIds) {
                 <button disabled class="w-full text-[10px] font-bold uppercase bg-gray-100 text-gray-400 py-1.5 rounded cursor-not-allowed">Vote</button>
             `;
         } else if (isNext) {
+             // THIS IS THE CURRENT / UPCOMING SESSION
             if (selectedItem) {
-                // Plain title for tooltip, HTML version for display
+                // If we have selected a book for this session
                 title = selectedItem.title;
                 titleDisplay = selectedItem.link 
                     ? `<a href="${selectedItem.link}" target="_blank" class="hover:underline hover:text-blue-600">${selectedItem.title}</a>`
@@ -128,57 +127,65 @@ function renderScheduleGrid(data, selectedItem, archivedSessionIds) {
                 
                 containerClass = "bg-white border-2 border-red-500 transform scale-105 z-10 shadow-xl";
                 
-                // Show disabled vote button since session is already selected
                 buttons = `
                     <button disabled class="w-full text-[10px] font-bold uppercase bg-gray-100 text-gray-400 py-1.5 rounded cursor-not-allowed">Vote</button>
                 `;
             } else {
-                // Show voting deadline for next session that's open
-                const previousSessionDate = getDeadline(SCHEDULE_DATES[idx - 1]);
-                const deadlineStr = previousSessionDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                title = `Voting closes <br> ${deadlineStr}`;
-                titleDisplay = title;
-                containerClass = "bg-white border-2 border-gray-200";
-                buttons = `
-                    <button onclick="scrollToVoting()" class="w-full text-[10px] font-bold uppercase bg-blue-50 text-blue-600 py-1.5 rounded hover:bg-blue-100 transition-colors border border-blue-100">Vote</button>
-                `;
+                // No book selected yet? 
+                // Wait, if it is the "Next" session (e.g. tomorrow), usually a book IS selected.
+                // If not, maybe we are still voting?
+                // But voting closes TODAY/NOW? or Yesterday?
+                // Check deadline
+                const deadline = getDeadline(dateStr); // Deadline is TODAY 11:59PM
+                if (nyNow < deadline) {
+                     // Voting is OPEN for this session!
+                     const deadlineStr = deadline.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                     title = `Voting closes <br> ${deadlineStr}`;
+                     titleDisplay = title;
+                     containerClass = "bg-white border-2 border-blue-500 transform scale-105 z-10 shadow-xl";
+                     buttons = `
+                        <button onclick="scrollToVoting()" class="w-full text-[10px] font-bold uppercase bg-blue-600 text-white py-1.5 rounded hover:bg-blue-700 transition-colors shadow-md">Vote Now</button>
+                     `;
+                } else {
+                     // Voting Closed, Discussion imminent
+                     title = "Voting Closed";
+                     titleDisplay = title;
+                     containerClass = "bg-white border-2 border-gray-200";
+                     buttons = `<button disabled class="w-full text-[10px] font-bold uppercase bg-gray-100 text-gray-400 py-1.5 rounded cursor-not-allowed">Closed</button>`;
+                }
             }
-         } else if (idx > nextIndex) {
-            // Check if previous session's voting has closed
-            // If so, this session should be open for voting
-            let previousVotingClosed = false;
-            let prevSessionDate = null;
-            if (idx > 0) {
-                const prevSessionId = `session_${SCHEDULE_DATES[idx - 1]}`;
-                const prevHasArchive = archivedSessionIds.has(prevSessionId);
-                
-                // Previous session voting closed if it has archive OR if we're past its date
-                prevSessionDate = getDeadline(SCHEDULE_DATES[idx - 1]);
-                previousVotingClosed = prevHasArchive || (now > prevSessionDate);
-            }
+         } else {
+            // FUTURE SESSIONS (idx > nextIndex)
+            // Determine if voting is OPEN for this future session.
+            // Rule: Voting opens when previous session ends?
+            // Actually, voting for Session N usually starts after Session N-1 voting closes.
             
-            if (previousVotingClosed) {
-                // Previous session voting closed, this session is open for voting!
-                // Show voting deadline (previous session date)
-                const deadlineStr = prevSessionDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                title = `Voting closes <br> ${deadlineStr}`;
-                titleDisplay = title;
-                containerClass = "bg-white border-2 border-gray-200";
-                buttons = `
-                    <button onclick="scrollToVoting()" class="w-full text-[10px] font-bold uppercase bg-blue-50 text-blue-600 py-1.5 rounded hover:bg-blue-100 transition-colors border border-blue-100">Vote</button>
-                `;
-            } else {
-                // Show voting deadline for all future sessions
-                // Deadline is the date of the previous session
-                const previousSessionDate = getDeadline(SCHEDULE_DATES[idx - 1]);
-                const deadlineStr = previousSessionDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                title = `Voting closes <br> ${deadlineStr}`;
-                titleDisplay = title;
-                
-                // Show disabled vote button for future sessions (voting opens later)
-                buttons = `
-                    <button disabled class="w-full text-[10px] font-bold uppercase bg-gray-100 text-gray-400 py-1.5 rounded cursor-not-allowed">Vote</button>
-                `;
+            // Check Previous Session
+            const prevSessionIdx = idx - 1;
+            if (prevSessionIdx >= 0) {
+                 const prevDeadline = getDeadline(SCHEDULE_DATES[prevSessionIdx]);
+                 // If previous deadline passed, we might be open.
+                 if (nyNow > prevDeadline) {
+                      // Open for voting!
+                      // Deadline is logic for THIS session
+                      const deadline = getDeadline(dateStr);
+                      const deadlineStr = deadline.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                      title = `Voting closes <br> ${deadlineStr}`;
+                      titleDisplay = title;
+                      containerClass = "bg-white border-2 border-gray-200";
+                      buttons = `
+                        <button onclick="scrollToVoting()" class="w-full text-[10px] font-bold uppercase bg-blue-50 text-blue-600 py-1.5 rounded hover:bg-blue-100 transition-colors border border-blue-100">Vote</button>
+                      `;
+                 } else {
+                      // Locked
+                      const deadline = getDeadline(dateStr);
+                      const deadlineStr = deadline.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                      title = `Voting closes <br> ${deadlineStr}`;
+                      titleDisplay = title;
+                      buttons = `
+                        <button disabled class="w-full text-[10px] font-bold uppercase bg-gray-100 text-gray-400 py-1.5 rounded cursor-not-allowed">Locked</button>
+                      `;
+                 }
             }
         }
         

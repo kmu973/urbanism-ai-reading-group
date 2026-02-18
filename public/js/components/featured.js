@@ -3,39 +3,59 @@
  * Renders the main "Next Reading" card or TBD card.
  */
 
-import { getSchedule } from '../utils/schedule.js';
-import { submitAttendance, getCurrentUser } from '../voting.js'; // Control passed back to main for actions, or import auth/api directly? 
-// Better to import auth/api logic or actions. 
-// voting.js exports `submitAttendance` and `allMembers`.
-// Let's rely on voting.js to export necessary data/actions or pass them in?
-// For cleaner dependency, let's pass data in or import from `voting.js` if circular dependency isn't an issue.
-// Circular dependency: voting.js imports featured.js, featured.js imports voting.js.
-// FIX: Move `allMembers` and actions to a separate store or pass as args.
-// For now, I will assume we pass `allMembers` as argument or export it from a non-circular place?
-// `allMembers` is in voting.js.
-// Let's pass `allMembers` and `submitAttendance` as arguments or attach to window for now (legacy way used in original) or import from a new `store.js`.
-// To keep it simple: `renderFeaturedReading` will accept `allMembers` and `currentUser` as args.
-// Actions like `submitAttendance` are globally available via `window` in the original code, 
-// so the HTML strings generated here will still work if `voting.js` attaches them to window.
-// Ideally, we move `submitAttendance` to `api.js` or `actions.js`, but let's stick to the window binding for onclicks in HTML strings.
+import { getNYTime } from '../utils/schedule.js';
+import { submitAttendance, getCurrentUser } from '../voting.js'; 
 
-export function renderFeaturedReading(selectedItem, currentUser, allMembers) {
-    const SCHEDULE_DATES = getSchedule();
-    const now = new Date();
-    let nextDate = SCHEDULE_DATES.find(d => new Date(d) >= now);
+let FEATURED_SCHEDULE = [];
+
+async function loadFeaturedSchedule() {
+    if (FEATURED_SCHEDULE.length > 0) return;
+    try {
+        const res = await fetch('/api/next-session-schedule');
+        if (res.ok) {
+            FEATURED_SCHEDULE = await res.json();
+        }
+    } catch (e) {
+        console.error("Failed to load featured schedule", e);
+    }
+}
+
+export async function renderFeaturedReading(selectedItem, currentUser, allMembers) {
+    const featuredContainer = document.getElementById('featuredReading');
+    if (!featuredContainer) return;
+
+    await loadFeaturedSchedule();
+    const nyNow = getNYTime();
     
-    let dateStr = "";
-    let dateLabel = "Next Session";
+    // Find active session from schedule
+    // Logic: Current Time must be within the 'featured' window of a session.
+    let activeSession = FEATURED_SCHEDULE.find(s => {
+        const start = new Date(s.featuredStart);
+        const end = new Date(s.featuredEnd);
+        return nyNow >= start && nyNow <= end;
+    });
+
+    // Fallback: If no window matches (e.g. gaps), find first future meeting?
+    if (!activeSession) {
+        // Find next session that hasn't happened yet?
+        activeSession = FEATURED_SCHEDULE.find(s => {
+             const sessionTime = new Date(s.sessionDate + "T18:00:00-05:00");
+             return nyNow < sessionTime;
+        });
+    }
+
+    let dateStr = "TBA";
+    let meetingTime = "5:00 PM - 6:00 PM EST";
+    let location = "CRON (9-255) + Zoom";
     
-    if (nextDate) {
-        const [y, m, d] = nextDate.split('-').map(Number);
-        const localDate = new Date(y, m - 1, d);
-        dateStr = localDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    } else {
-        const fallback = new Date();
-        fallback.setDate(fallback.getDate() + 14);
-        dateStr = fallback.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        dateLabel = "Target Date";
+    if (activeSession) {
+        // activeSession.sessionDate is "YYYY-MM-DD".
+        // Create date object at Noon to avoid timezone shifts
+        const d = new Date(activeSession.sessionDate + "T12:00:00");
+        dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/New_York' });
+        
+        if (activeSession.meetingTime) meetingTime = activeSession.meetingTime;
+        if (activeSession.location) location = activeSession.location;
     }
     
     const titleHtml = selectedItem.link 
@@ -68,7 +88,7 @@ export function renderFeaturedReading(selectedItem, currentUser, allMembers) {
            </div>`
         : '';
 
-    document.getElementById('featuredReading').innerHTML = `
+    featuredContainer.innerHTML = `
         <section class="bg-black text-white p-8 rounded-lg shadow-xl relative overflow-hidden mb-12 border-l-8 border-red-600">
             <div class="absolute top-0 right-0 p-4 opacity-10 text-9xl font-bold mono select-none pointer-events-none">READ</div>
             <div class="relative z-10">
@@ -77,13 +97,15 @@ export function renderFeaturedReading(selectedItem, currentUser, allMembers) {
                         ${selectedItem.discussionStatus === 'selected' ? 'UPCOMING READING' : 'PREVIOUS READING'}
                     </p>
                     <div class="text-right">
-                        <p class="text-xs text-gray-400 uppercase">${dateLabel}</p>
+                        <p class="text-xs text-gray-400 uppercase">Next Session</p>
                         <p class="text-lg font-bold text-white">${dateStr} (Wed)</p>
+                        <p class="text-xs text-gray-500 mt-1">${meetingTime}</p>
                     </div>
                 </div>
                 <h2 class="text-3xl md:text-5xl font-bold mb-4 leading-tight">${titleHtml}</h2>
                 <div class="flex flex-col md:flex-row gap-6 text-gray-400 border-t border-gray-800 pt-6 mt-6 mb-4">
                     <p class="mono text-sm">AUTHOR: <span class="text-white">${selectedItem.author}</span></p>
+
                 </div>
                 
                 <div class="flex flex-col items-start gap-4 relative z-20">
@@ -95,12 +117,40 @@ export function renderFeaturedReading(selectedItem, currentUser, allMembers) {
     `;
 }
 
-export function renderTBDReading() {
-    const nextWednesday = new Date();
-    nextWednesday.setDate(nextWednesday.getDate() + (3 + 7 - nextWednesday.getDay()) % 7);
-    const dateStr = nextWednesday.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+export async function renderTBDReading() {
+    const featuredContainer = document.getElementById('featuredReading');
+    if (!featuredContainer) return;
 
-    document.getElementById('featuredReading').innerHTML = `
+    await loadFeaturedSchedule();
+    const nyNow = getNYTime();
+    
+    // Find active session from schedule
+    let activeSession = FEATURED_SCHEDULE.find(s => {
+        const start = new Date(s.featuredStart);
+        const end = new Date(s.featuredEnd);
+        return nyNow >= start && nyNow <= end;
+    });
+
+    if (!activeSession) {
+         // Fallback
+         activeSession = FEATURED_SCHEDULE.find(s => {
+             const sessionTime = new Date(s.sessionDate + "T18:00:00-05:00");
+             return nyNow < sessionTime;
+        });
+    }
+
+    let dateStr = "TBA";
+    let meetingTime = "5:00 PM - 6:00 PM EST";
+    let location = "CRON (9-255) + Zoom";
+
+    if (activeSession) {
+         const d = new Date(activeSession.sessionDate + "T12:00:00");
+         dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/New_York' });
+         if (activeSession.meetingTime) meetingTime = activeSession.meetingTime;
+         if (activeSession.location) location = activeSession.location;
+    }
+
+    featuredContainer.innerHTML = `
         <section class="bg-gray-900 text-white p-8 rounded-lg shadow-xl relative overflow-hidden mb-12 border-l-8 border-gray-600">
             <div class="absolute top-0 right-0 p-4 opacity-10 text-9xl font-bold mono">TBD</div>
             <div class="relative z-10">
@@ -111,12 +161,14 @@ export function renderTBDReading() {
                     <div class="text-right">
                         <p class="text-xs text-gray-400 uppercase">Next Session</p>
                         <p class="text-lg font-bold text-white">${dateStr} (Wed)</p>
+                         <p class="text-xs text-gray-500 mt-1">${meetingTime}</p>
                     </div>
                 </div>
                 <h2 class="text-3xl md:text-5xl font-bold mb-4 leading-tight text-gray-300 italic">Voting in Progress...</h2>
                 <div class="flex flex-col md:flex-row gap-6 text-gray-500 border-t border-gray-800 pt-6 mt-6">
                     <p class="mono text-sm">TOPIC: <span class="text-gray-300">To Be Decided</span></p>
                     <p class="mono text-sm">STATUS: <span class="text-gray-300 uppercase">Open for Voting</span></p>
+
                 </div>
             </div>
         </section>

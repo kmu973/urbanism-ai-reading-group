@@ -3,7 +3,7 @@
  * Renders the table of active proposals.
  */
 
-import { getSchedule, getDeadline, formatDeadlineDisplay } from '../utils/schedule.js';
+import { getSchedule, getDeadline, formatDeadlineDisplay, getCurrentSessionIndex, getNYTime } from '../utils/schedule.js';
 
 export function renderActiveVoting(activeItems, currentUser, selectedItem) {
     const voteBody = document.getElementById('votingTableBody');
@@ -20,6 +20,57 @@ export function renderActiveVoting(activeItems, currentUser, selectedItem) {
             ).length;
         }
 
+        // Calculate deadline logic
+        // Calculate deadline logic using strict NY Time rules
+        const SCHEDULE_DATES = getSchedule();
+        const nyNow = getNYTime();
+        const activeIndex = getCurrentSessionIndex();
+        
+        let deadlineDate = null;
+        let closureLabel = "";
+
+        // Determine what we are voting FOR.
+        // If we are active in Session N (e.g. Feb 18), we are voting for Session N+1 (Mar 4).
+        // If we are BEFORE Session 0 (e.g. Feb 17), we are voting for Session 1 (Mar 4) because Session 0 is locked?
+        // Wait, if today is Feb 17. 
+        // Session 0 (Feb 18) voting closed Feb 4.
+        // Session 1 (Mar 4) voting closes Feb 18.
+        // So on Feb 17, we are voting for Session 1 (Mar 4).
+        
+        let targetSessionIndex = -1;
+        
+        if (activeIndex !== -1) {
+            // Check if we are past the voting window for the *current* session?
+            // "Current" usually means "Next Upcoming".
+            // If next upcoming is Feb 18. Its voting closed Feb 4.
+            // So we are NOT voting for Feb 18.
+            // We are voting for the session AFTER that (Mar 4).
+            
+            // However, we need to handle the case where we might be in a "gap" or undefined state.
+            // Simplified: We are always voting for `activeIndex + 1`?
+            // Unless `activeIndex` is the last one.
+            
+            targetSessionIndex = activeIndex + 1;
+            
+            // Edge case: Before first session? 
+            // If today is Jan 1. activeIndex might count as 0 (first future)?
+            // getCurrentSessionIndex returns first future date.
+            // If today is Feb 17. activeIndex = 0 (Feb 18).
+            // We want to vote for Mar 4.
+            
+            if (targetSessionIndex < SCHEDULE_DATES.length) {
+                deadlineDate = getDeadline(SCHEDULE_DATES[targetSessionIndex]);
+            }
+        }
+
+        let votingClosed = false;
+        if (deadlineDate && nyNow > deadlineDate) {
+             closureLabel = "Closed";
+             votingClosed = true;
+        } else if (deadlineDate) {
+             closureLabel = `Closes: ${formatDeadlineDisplay(deadlineDate)}`;
+        }
+
         // Add vote counter to section title with instruction
         const titleElement = document.getElementById('votingSectionTitle');
         if (titleElement) {
@@ -31,43 +82,12 @@ export function renderActiveVoting(activeItems, currentUser, selectedItem) {
             const dotColor = userVoteCount >= 3 ? 'bg-black' : 'bg-blue-600';
             const counterText = `${userVoteCount}/3`;
 
-            // Calculate deadline logic
-            const SCHEDULE_DATES = getSchedule();
-            const now = new Date();
-            let nextIndex = SCHEDULE_DATES.findIndex(d => new Date(d) >= now);
-            if (nextIndex === -1 && new Date(SCHEDULE_DATES[SCHEDULE_DATES.length-1]) < now) nextIndex = SCHEDULE_DATES.length;
-
-            let closureLabel = "";
-            let deadlineDate = null;
+            // ... (existing code for infoHtml) ...
             
-            if (nextIndex !== -1 && nextIndex < SCHEDULE_DATES.length) {
-                if (selectedItem && selectedItem.discussionStatus === 'selected') {
-                    // Start voting for session AFTER next (Next index is the upcoming session)
-                    deadlineDate = getDeadline(SCHEDULE_DATES[nextIndex]);
-                } else {
-                    // Voting for upcoming session (matches nextIndex)
-                    // Deadline is previous session (N-1)
-                    if (nextIndex > 0) {
-                        deadlineDate = getDeadline(SCHEDULE_DATES[nextIndex - 1]);
-                    }
-                }
-            }
-
-            if (deadlineDate) {
-                if (now > deadlineDate) {
-                     closureLabel = "Closed";
-                } else {
-                     closureLabel = `Closes: ${formatDeadlineDisplay(deadlineDate)}`;
-                }
-            } else if (nextIndex === 0 && !selectedItem) {
-                // Special case: First session closing soon
-                 closureLabel = "Closing Soon";
-            }
-
             const infoHtml = `
                 <div class="flex items-center gap-4 mt-2 ml-1">
                     <span class="badge badge-gray">Voting Limit: 3</span>
-                    ${closureLabel ? `<span class="text-xs font-bold text-red-500 bg-red-50 border border-red-100 px-2 py-0.5 rounded uppercase tracking-wider">${closureLabel}</span>` : ''}
+                    ${closureLabel ? `<span class="text-xs font-bold ${votingClosed ? 'text-red-600 bg-red-100' : 'text-red-500 bg-red-50'} border border-red-100 px-2 py-0.5 rounded uppercase tracking-wider">${closureLabel}</span>` : ''}
                     <span class="text-xs font-medium ${counterColor} flex items-center gap-2 bg-blue-50 px-2 py-1 rounded border border-blue-100">
                         <span class="w-1.5 h-1.5 rounded-full ${dotColor}"></span>
                         <strong class="text-sm">${counterText}</strong> selected
@@ -75,7 +95,8 @@ export function renderActiveVoting(activeItems, currentUser, selectedItem) {
                 </div>
             `;
             
-            // Append securely to parent section instead of relying on a potentially missing container
+            // ... (existing code for appending infoHtml) ...
+             // Append securely to parent section instead of relying on a potentially missing container
             const votingSection = document.getElementById('votingSection');
             const existingInfo = document.getElementById('votingInfoContainer');
             
@@ -93,7 +114,8 @@ export function renderActiveVoting(activeItems, currentUser, selectedItem) {
                      }
                  }
             }
-        }
+
+            }
 
         voteBody.innerHTML = activeItems.map(item => {
             const iVotedForThis = currentUser && item.voters && item.voters.includes(currentUser.email);
@@ -107,6 +129,9 @@ export function renderActiveVoting(activeItems, currentUser, selectedItem) {
             if (!currentUser) {
                 // Login state
                 actionBtn = `<span class="login-placeholder">Login to vote</span>`;
+            } else if (votingClosed) {
+                // Closed state
+                actionBtn = `<button disabled class="btn-vote-base btn-vote-disabled shadow-none opacity-50 cursor-not-allowed">Closed</button>`;
             } else if (iVotedForThis) {
                 // Voted state - Brighter Natural Green (Emerald 500) -> Hover to Darker Green (Emerald 700)
                 actionBtn = `<button onclick="submitVote('${item.id}')" class="btn-vote-base btn-vote-voted group shadow-md">

@@ -40,8 +40,12 @@ export function renderProposalBanner(data, currentUser) {
          deadlineDate = deadline;
     }
     
+    const isClosed = deadlineDate && now > deadlineDate;
+
     const timeWindowText = deadlineDate 
-        ? `Proposals open until <span class="font-bold text-blue-700">${formatDeadlineDisplay(deadlineDate)}</span>`
+        ? (isClosed 
+            ? `<span class="font-bold text-red-600 uppercase tracking-wide">Proposals Closed</span>`
+            : `Proposals open until <span class="font-bold text-blue-700">${formatDeadlineDisplay(deadlineDate)}</span>`)
         : "Loading schedule...";
 
     // 2. Check User Status
@@ -71,6 +75,10 @@ export function renderProposalBanner(data, currentUser) {
         `;
     } else if (hasActiveProposal) {
         // Active proposal state (Update mode)
+        const btnState = isClosed 
+            ? `<button disabled class="bg-gray-300 text-white px-6 py-2.5 rounded font-bold text-sm uppercase cursor-not-allowed whitespace-nowrap shadow-none">Closed</button>`
+            : `<button onclick="openProposalModal()" class="bg-green-600 text-white px-6 py-2.5 rounded font-bold text-sm uppercase hover:bg-green-700 transition-colors whitespace-nowrap shadow-sm">Change Reading</button>`;
+
         banner.className = "mt-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between transition-colors duration-500";
         banner.innerHTML = `
             <div class="flex-1">
@@ -79,14 +87,18 @@ export function renderProposalBanner(data, currentUser) {
                     You have an active proposal
                 </p>
                 <p class="text-xs text-green-700">"<strong>${userProposal.title}</strong>"</p>
-                <p class="text-[10px] text-green-600 mt-1 uppercase tracking-wide">SUBMITTING AGAIN WILL UPDATE THIS ENTRY</p>
+                <p class="text-[10px] text-green-600 mt-1 uppercase tracking-wide">
+                    ${isClosed ? "Submissions are closed for this session" : "SUBMITTING AGAIN WILL UPDATE THIS ENTRY"}
+                </p>
             </div>
-            <button onclick="openProposalModal()" class="bg-green-600 text-white px-6 py-2.5 rounded font-bold text-sm uppercase hover:bg-green-700 transition-colors whitespace-nowrap shadow-sm">
-                Change Reading
-            </button>
+            ${btnState}
         `;
     } else {
         // Standard state (Can add new)
+        const btnState = isClosed
+            ? `<button disabled class="bg-gray-300 text-white px-6 py-2.5 rounded font-bold text-sm uppercase cursor-not-allowed whitespace-nowrap shadow-none">Closed</button>`
+            : `<button onclick="openProposalModal()" class="bg-blue-600 text-white px-6 py-2.5 rounded font-bold text-sm uppercase hover:bg-blue-700 transition-colors whitespace-nowrap shadow-blue-200 shadow-lg translate-y-0 hover:-translate-y-0.5 transition-all">Add Reading to List</button>`;
+
         banner.className = "mt-6 p-4 bg-blue-50 border border-blue-100 rounded-lg flex items-center justify-between transition-colors";
         banner.innerHTML = `
             <div class="flex-1">
@@ -94,9 +106,7 @@ export function renderProposalBanner(data, currentUser) {
                 <p class="text-xs text-gray-600 mb-1">Members can add one reading every two weeks</p>
                 <p class="text-[10px] text-blue-600 uppercase tracking-wide bg-blue-100 inline-block px-1.5 py-0.5 rounded">${timeWindowText}</p>
             </div>
-            <button onclick="openProposalModal()" class="bg-blue-600 text-white px-6 py-2.5 rounded font-bold text-sm uppercase hover:bg-blue-700 transition-colors whitespace-nowrap shadow-blue-200 shadow-lg translate-y-0 hover:-translate-y-0.5 transition-all">
-                Add Reading to List
-            </button>
+            ${btnState}
         `;
     }
 }
