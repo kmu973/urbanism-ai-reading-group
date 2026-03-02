@@ -213,19 +213,37 @@ function checkAndArchiveVotes() {
                 // 3. Pick Winner (Top 1)
                 const winner = candidates[0];
                 
-                // 4. Update Winner Status in Reading List (Persist this change!)
-                // We need to mark it as 'selected' so it shows up as "Upcoming"
                 // And maybe mark others as 'archived_proposal' or keep them 'proposed' for next round?
                 // Usually, losers carry over. Winner becomes 'selected'.
                 
-                // user request: "how data will be saved"
+                // --- UPDATE PAST SELECTED TO DISCUSSED ---
+                // Before marking the new winner, any reading that was currently marked as 'selected'
+                // has now officially passed its meeting time (since we are archiving the NEXT session).
+                // Let's transition those to 'discussed' and ensure vote status is closed to display properly.
+                readingList.forEach(r => {
+                    if (r.discussionStatus === 'selected') {
+                        r.discussionStatus = 'discussed';
+                        r.voteStatus = 'closed';
+                    }
+                });
+
                 // We update readingList.json
                 const winnerIndex = readingList.findIndex(r => r.id === winner.id);
                 if (winnerIndex !== -1) {
                     readingList[winnerIndex].discussionStatus = 'selected'; // Marks it for "Next Session"
-                    // Also set the "sessionDate" it is selected FOR?
+                    // Also set the "sessionDate" it is selected FOR
                     readingList[winnerIndex].selectedForSession = rule.sessionDate;
+                    readingList[winnerIndex].voteStatus = 'closed'; // Stop voting for it
                 }
+                
+                // --- RESET ALL OPEN VOTES ---
+                // Reset vote count and voters for the next session
+                readingList.forEach(r => {
+                     if (r.discussionStatus === 'proposed' || r.discussionStatus === 'selected') {
+                         r.voteCount = 0;
+                         r.voters = [];
+                     }
+                });
                 
                 // 5. Create Archive Entry
                 const allProposalsSnapshot = candidates.map(r => ({
@@ -272,6 +290,70 @@ function checkAndArchiveVotes() {
         console.error('Error during vote archiving:', error);
     }
 }
+
+// Global reference for active timeout (so we can clear it if rules reload)
+let activeAlarmTimeout = null;
+
+function scheduleVotingAlarms() {
+    try {
+        const votingRulesPath = path.join(__dirname, 'data', 'votingclosetime.json');
+        if (!fs.existsSync(votingRulesPath)) return;
+        
+        const votingRules = JSON.parse(fs.readFileSync(votingRulesPath, 'utf8'));
+        const now = new Date();
+        
+        // --- Catch-up Check ---
+        // Instantly run the archive check on startup/reload to catch any
+        // deadlines that passed while the server was offline or before this code existed.
+        checkAndArchiveVotes();
+
+        // Clear any existing alarm to avoid duplicates
+        if (activeAlarmTimeout) {
+            clearTimeout(activeAlarmTimeout);
+            activeAlarmTimeout = null;
+        }
+
+        // Find the strictly next upcoming deadline
+        let nextDeadline = null;
+        for (const rule of votingRules) {
+            const closingTime = new Date(rule.votingClose);
+            if (closingTime > now) {
+                // If this deadline is in the future, check if it's the *nearest* future
+                if (!nextDeadline || closingTime < new Date(nextDeadline.votingClose)) {
+                    nextDeadline = rule;
+                }
+            }
+        }
+
+        if (nextDeadline) {
+            const targetTime = new Date(nextDeadline.votingClose);
+            const msUntilDeadline = targetTime.getTime() - now.getTime();
+            
+            // Just to be safe with max timeout size (~24.8 days)
+            const MAX_TIMEOUT = 2147483647; 
+            if (msUntilDeadline <= MAX_TIMEOUT) {
+                log(`[Auto-Archive] Scheduled alarm for Next Deadline: ${targetTime.toISOString()} (${Math.round(msUntilDeadline/60000)} minutes away)`);
+                activeAlarmTimeout = setTimeout(() => {
+                    log(`[Auto-Archive] Alarm triggered for deadline: ${targetTime.toISOString()}`);
+                    checkAndArchiveVotes();
+                    // Schedule the next one after this fires
+                    setTimeout(scheduleVotingAlarms, 1000); 
+                }, msUntilDeadline);
+            } else {
+                // If it's more than 24 days away, check back in a week
+                log(`[Auto-Archive] Next deadline is more than 24 days away. Scheduling a check for later.`);
+                activeAlarmTimeout = setTimeout(scheduleVotingAlarms, 7 * 24 * 60 * 60 * 1000);
+            }
+        } else {
+            log("[Auto-Archive] No upcoming voting deadlines found.");
+        }
+    } catch(err) {
+        console.error("Error setting voting alarms:", err);
+    }
+}
+
+// Initial alarm scheduling on startup
+scheduleVotingAlarms();
 
 // GET /api/readings
 // Returns the merged reading list (main + new proposals)

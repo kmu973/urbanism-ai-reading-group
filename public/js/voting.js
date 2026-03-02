@@ -82,7 +82,7 @@ export async function renderTables(data) {
     renderActiveVoting(activeItems, currentUser, selectedItem);
     
     // 2. Render Archive
-    renderArchive(archiveItems);
+    renderArchive(archiveItems, allMembers);
     
     // 3. Render Schedule
     renderSchedule(data, selectedItem);

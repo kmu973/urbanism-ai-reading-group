@@ -474,43 +474,7 @@ class ReadingListManager {
         return winner;
     }
 
-    // Helper: Generate email text
-    generateDecisionEmail(winner) {
-        if (!winner) return;
 
-        // Calculate next Wednesday
-        const nextWednesday = new Date();
-        // If today is Wednesday, this targets next week. If we want *this* Wednesday if before 5pm, logic varies.
-        // Assuming we decide BEFORE the session, so "Next Wednesday" is usually correct.
-        nextWednesday.setDate(nextWednesday.getDate() + (3 + 7 - nextWednesday.getDay()) % 7);
-        nextWednesday.setHours(17, 0, 0, 0); // 5 PM
-
-        // Format for GCal: YYYYMMDDTHHMMSSZ (UTC) -> actually easier to use local time without Z if we want floating, 
-        // toISOString returns UTC. Let's use simple string manipulation for local time to avoid timezone mess if possible,
-        // or just stick to simple dates. 
-        // Better: Use specific timezone logic or naive strings.
-        // Naive formatting for "YYYYMMDDTHHMMSS" (Local)
-        const pad = n => n.toString().padStart(2, '0');
-        const formatGCal = d => 
-            d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + 'T' + 
-            pad(d.getHours()) + pad(d.getMinutes()) + '00';
-
-        const nextWedEnd = new Date(nextWednesday);
-        nextWedEnd.setHours(18, 0, 0, 0); // 6 PM
-
-        const dates = `${formatGCal(nextWednesday)}/${formatGCal(nextWedEnd)}`;
-        
-        const calLink = `https://www.google.com/calendar/render?action=TEMPLATE&text=Reading+Group:+${encodeURIComponent(winner.title)}&dates=${dates}&details=Reading:+${encodeURIComponent(winner.title)}+by+${encodeURIComponent(winner.author)}&location=LCAU+Conference+Room+(E14-140),+75+Amherst+St,+Cambridge,+MA`;
-
-        console.log(`\n--- DRAFT EMAIL ---`);
-        console.log(`Subject: Next Reading: ${winner.title}`);
-        console.log(`\nHi Team,\n\nThe voting has concluded. Based on the results, our next reading will be:`);
-        console.log(`\n"${winner.title}" by ${winner.author}`);
-        console.log(`Proposed by: ${winner.proposedBy}`);
-        console.log(`\nPlease read this before our next session on ${nextWednesday.toDateString()}.`);
-        console.log(`\n📅 Add to Calendar: ${calLink}`);
-        console.log(`\nBest,\nMin`);
-    }
 }
 
 // CLI Integration
@@ -558,8 +522,7 @@ if (require.main === module) {
                     console.log(attendMsg);
                     break;
                 case 'decide':
-                    const winner = await manager.selectWinner();
-                    manager.generateDecisionEmail(winner);
+                    await manager.selectWinner();
                     break;
                 case 'list':
                     await manager.init(); // Ensure data is loaded for listing

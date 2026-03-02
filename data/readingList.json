@@ -7,12 +7,10 @@
     "link": "https://web.mit.edu/allanmc/www/benjamin.pdf",
     "proposedBy": "Ashley Louie",
     "voteStatus": "open",
-    "voteCount": 1,
+    "voteCount": 0,
     "discussionStatus": "proposed",
     "proposedDate": "2026-02-06T00:00:00.000Z",
-    "voters": [
-      "javierdiazpenaloza@gmail.com"
-    ]
+    "voters": []
   },
   {
     "id": "item_1769970000002",
@@ -22,12 +20,10 @@
     "link": "https://en.wikipedia.org/wiki/Atlas_of_AI",
     "proposedBy": "Xavier Ayub",
     "voteStatus": "open",
-    "voteCount": 1,
+    "voteCount": 0,
     "discussionStatus": "proposed",
     "proposedDate": "2026-02-06T00:00:00.000Z",
-    "voters": [
-      "atta@mit.edu"
-    ]
+    "voters": []
   },
   {
     "id": "item_1769970000003",
@@ -37,12 +33,10 @@
     "link": "https://www.nytimes.com/video/opinion/100000010410190/i-witnessed-ai-collide-with-climate.html",
     "proposedBy": "Claire Hanly",
     "voteStatus": "open",
-    "voteCount": 1,
+    "voteCount": 0,
     "discussionStatus": "proposed",
     "proposedDate": "2026-02-06T00:00:00.000Z",
-    "voters": [
-      "atta@mit.edu"
-    ]
+    "voters": []
   },
   {
     "id": "item_1769970000004",
@@ -51,14 +45,12 @@
     "mediumType": "Book",
     "link": "https://www.penguinrandomhouse.com/books/743569/empire-of-ai-by-karen-hao/",
     "proposedBy": "Hanyong Xu",
-    "voteStatus": "open",
-    "voteCount": 2,
-    "discussionStatus": "proposed",
+    "voteStatus": "closed",
+    "voteCount": 0,
+    "discussionStatus": "selected",
     "proposedDate": "2026-02-06T00:00:00.000Z",
-    "voters": [
-      "atta@mit.edu",
-      "minwook@mit.edu"
-    ]
+    "voters": [],
+    "selectedForSession": "2026-03-04"
   },
   {
     "id": "item_1769970000005",
@@ -68,12 +60,10 @@
     "link": "https://mitpress.mit.edu/9780262538961/the-smart-enough-city/",
     "proposedBy": "Hanyong Xu",
     "voteStatus": "open",
-    "voteCount": 1,
+    "voteCount": 0,
     "discussionStatus": "proposed",
     "proposedDate": "2026-02-06T00:00:00.000Z",
-    "voters": [
-      "minwook@mit.edu"
-    ]
+    "voters": []
   },
   {
     "id": "item_1769970000006",
@@ -83,12 +73,10 @@
     "link": "https://research.google/blog/streetreaderai-towards-making-street-view-accessible-via-context-aware-multimodal-ai/",
     "proposedBy": "Onur Tumturk",
     "voteStatus": "open",
-    "voteCount": 1,
+    "voteCount": 0,
     "discussionStatus": "proposed",
     "proposedDate": "2026-02-06T00:00:00.000Z",
-    "voters": [
-      "minwook@mit.edu"
-    ]
+    "voters": []
   },
   {
     "id": "item_1769970000007",
@@ -98,12 +86,10 @@
     "link": "https://ojs.aaai.org/aimagazine/index.php/aimagazine/article/view/1029",
     "proposedBy": "Rohit Priyadarshi Sanatani",
     "voteStatus": "open",
-    "voteCount": 1,
+    "voteCount": 0,
     "discussionStatus": "proposed",
     "proposedDate": "2026-02-06T00:00:00.000Z",
-    "voters": [
-      "javierdiazpenaloza@gmail.com"
-    ]
+    "voters": []
   },
   {
     "id": "item_1769970000008",
@@ -127,13 +113,19 @@
     "proposedBy": "Dale Whittington",
     "voteStatus": "closed",
     "voteCount": 9,
-    "discussionStatus": "selected",
+    "discussionStatus": "discussed",
+    "selectedForSession": "2026-02-18",
     "proposedDate": "2026-02-06T00:00:00.000Z",
     "voters": [],
     "attendees": [
       "minwook@mit.edu",
       "atta@mit.edu",
-      "javierdiazpenaloza@gmail.com"
+      "javierdiazpenaloza@gmail.com",
+      "xusheng.huang@outlook.com",
+      "xavierayub@gmail.com",
+      "maysaa@mit.edu",
+      "sanatani@mit.edu",
+      "lyons66@mit.edu"
     ]
   },
   {
